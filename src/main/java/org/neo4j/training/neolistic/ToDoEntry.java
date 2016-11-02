@@ -57,7 +57,7 @@ public class ToDoEntry
     public static ToDoEntry load( UUID uuid )
     {
         return single( driver().read( tx -> tx.run(
-                "MATCH (entry:Entry {uuid:$uuid) RETURN entry",
+                "MATCH (entry:Entry {uuid:$uuid}) RETURN entry",
                 parameters( "uuid", uuid.toString() ) )
                 .list( record -> ToDoEntry.from( record.get( "entry" ).asNode() ) ) ) );
     }
@@ -156,6 +156,7 @@ public class ToDoEntry
         this.completed = completed;
     }
 
+    // TODO: move this helper into the driver?
     private static <T> T single( List<T> list )
     {
         if ( list.isEmpty() )
