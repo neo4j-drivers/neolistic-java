@@ -104,7 +104,7 @@ public class Neolistic
             UUID uuid = UUID.randomUUID();
             String title = parsed.get( "title" ).getAsString();
             int order = parsed.get( "order" ).getAsInt();
-            return Entry.from( tx.run( "CREATE (entry:Entry {uuid:$uuid,title:$title,order:$order} RETURN entry",
+            return Entry.from( tx.run( "CREATE (entry:Entry {uuid:$uuid,title:$title,order:$order}) RETURN entry",
                     parameters( "uuid", uuid.toString(), "title", title, "order", order ) )
                     .next().get( "entry" ).asNode() );
         } ), gson::toJson );
