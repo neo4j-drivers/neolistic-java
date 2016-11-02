@@ -25,24 +25,24 @@ import java.util.UUID;
 
 import org.neo4j.driver.v1.types.Node;
 
-public class Entry
+public class ToDoEntry
 {
     private UUID uuid;
     private String title;
     private long order;
     private boolean completed;
 
-    public static Entry from( Node node )
+    public static ToDoEntry from( Node node )
     {
         Map<String, Object> properties = node.asMap();
-        return new Entry(
+        return new ToDoEntry(
                 UUID.fromString( (String) properties.getOrDefault( "uuid", UUID.randomUUID().toString() ) ),
                 (String) properties.getOrDefault( "title", "" ),
                 (Long) properties.getOrDefault( "order", 0L ),
                 (Boolean) properties.getOrDefault( "completed", false ) );
     }
 
-    private Entry( UUID uuid, String title, long order, boolean completed )
+    private ToDoEntry( UUID uuid, String title, long order, boolean completed )
     {
         this.uuid = uuid;
         this.title = title;
