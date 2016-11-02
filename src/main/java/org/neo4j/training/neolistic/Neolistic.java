@@ -23,6 +23,8 @@ package org.neo4j.training.neolistic;
 import java.util.List;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.neo4j.driver.v1.AuthToken;
 import org.neo4j.driver.v1.AuthTokens;
@@ -48,9 +50,15 @@ public class Neolistic
         Gson gson = new Gson();
 
         before( ( request, response ) -> response.type( "application/json" ) );
-        get( "/", ToDoList::allEntries, gson::toJson );
-        post( "/", ToDoList::createEntry, gson::toJson );
-        delete( "/", ToDoList::deleteAllEntries, gson::toJson );
+
+        get( "/", ( request, response ) -> ToDoEntry.loadAll(), gson::toJson );
+
+        post( "/", ( request, response ) -> driver().write( tx -> {
+            JsonObject parsed = new JsonParser().parse( request.body() ).getAsJsonObject();
+            return ToDoEntry.create( parsed.get( "title" ).getAsString(), parsed.get( "order" ).getAsInt() );
+        } ), gson::toJson );
+
+        delete( "/", ( request, response ) -> ToDoEntry.deleteAll(), gson::toJson );
 
         enableDebugScreen();
     }

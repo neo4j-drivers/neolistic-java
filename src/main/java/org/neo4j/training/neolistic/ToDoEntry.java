@@ -20,10 +20,14 @@
 
 package org.neo4j.training.neolistic;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.neo4j.driver.v1.types.Node;
+
+import static org.neo4j.driver.v1.Values.parameters;
+import static org.neo4j.training.neolistic.Neolistic.driver;
 
 public class ToDoEntry
 {
@@ -32,7 +36,69 @@ public class ToDoEntry
     private long order;
     private boolean completed;
 
-    public static ToDoEntry from( Node node )
+    /**
+     * Load all entries from the database.
+     *
+     * @return
+     */
+    public static List<ToDoEntry> loadAll()
+    {
+        return driver().read( tx -> tx.run(
+                "MATCH (entry:Entry) RETURN entry" )
+                .list( record -> ToDoEntry.from( record.get( "entry" ).asNode() ) ) );
+    }
+
+    /**
+     * Load a single entry from the graph database by UUID.
+     *
+     * @param uuid
+     * @return
+     */
+    public static ToDoEntry load( UUID uuid )
+    {
+        return single( driver().read( tx -> tx.run(
+                "MATCH (entry:Entry {uuid:$uuid) RETURN entry",
+                parameters( "uuid", uuid.toString() ) )
+                .list( record -> ToDoEntry.from( record.get( "entry" ).asNode() ) ) ) );
+    }
+
+    /**
+     * Create a new entry in the graph database.
+     *
+     * @param title
+     * @param order
+     * @return the new entry
+     */
+    public static ToDoEntry create( String title, int order )
+    {
+        return single( driver().read( tx -> tx.run(
+                "CREATE (entry:Entry {uuid:$uuid, title:$title, order:$order}) RETURN entry",
+                parameters(
+                        "uuid", UUID.randomUUID().toString(),
+                        "title", title,
+                        "order", order ) )
+                .list( record -> ToDoEntry.from( record.get( "entry" ).asNode() ) ) ) );
+    }
+
+    /**
+     * Delete all entries from the graph database.
+     *
+     * @return
+     */
+    public static List<ToDoEntry> deleteAll()
+    {
+        return driver().write( tx -> tx.run(
+                "MATCH (entry:Entry) DETACH DELETE entry RETURN entry" )
+                .list( record -> ToDoEntry.from( record.get( "entry" ).asNode() ) ) );
+    }
+
+    /**
+     * Construct an entry from the properties of a graph node.
+     *
+     * @param node
+     * @return
+     */
+    static ToDoEntry from( Node node )
     {
         Map<String, Object> properties = node.asMap();
         return new ToDoEntry(
@@ -88,5 +154,21 @@ public class ToDoEntry
     public void setCompleted( boolean completed )
     {
         this.completed = completed;
+    }
+
+    private static <T> T single( List<T> list )
+    {
+        if ( list.isEmpty() )
+        {
+            throw new AssertionError( "One item expected, none found" );
+        }
+        else if ( list.size() == 1 )
+        {
+            return list.get( 0 );
+        }
+        else
+        {
+            throw new AssertionError( "One item expected, " + list.size() + " found" );
+        }
     }
 }
